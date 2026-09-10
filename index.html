@@ -35,7 +35,6 @@ input:focus,select:focus{border-color:#667eea}.custom{border-top:1px solid #eaec
 </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <script>
 const SUPABASE_URL="https://pzricttvourvfvymwcjs.supabase.co";
 const SUPABASE_KEY="sb_publishable_PUqEGsrCKbj3h3UyrUuDaw_MvrCNrXv";
@@ -62,7 +61,6 @@ document.getElementById("generateBtn").onclick=async()=>{
     const name=document.getElementById("name").value.trim();
     if(!name){status("Please enter Full Name.",true);return;}
     if(!db){status("Supabase is not connected. Refresh the page and try again.",true);return;}
-    if(!window.QRCode){status("QR library did not load. Refresh the page and try again.",true);return;}
     const fields=[...document.querySelectorAll(".row")].map(r=>({label:r.querySelector(".f-label").value.trim(),value:r.querySelector(".f-value").value.trim(),type:r.querySelector(".f-type").value})).filter(x=>x.label&&x.value);
     const data={name,designation:document.getElementById("designation").value.trim(),company:document.getElementById("company").value.trim(),fields};
     const base=slugify(name);let slug=base;
@@ -74,12 +72,22 @@ document.getElementById("generateBtn").onclick=async()=>{
     const ins=await db.from("digital_cards").insert({slug,data});
     if(ins.error)throw new Error(ins.error.message);
     const cardUrl=new URL("card.html",location.href);cardUrl.searchParams.set("slug",slug);
-    const canvas=document.createElement("canvas");
-    await QRCode.toCanvas(canvas,cardUrl.toString(),{width:1000,margin:4,errorCorrectionLevel:"H"});
-    lastQR=canvas.toDataURL("image/png");document.getElementById("qr").src=lastQR;
+    const qrUrl="https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&margin=12&ecc=H&data="+encodeURIComponent(cardUrl.toString());
+    lastQR=qrUrl;document.getElementById("qr").src=qrUrl;
     document.getElementById("publicUrl").textContent=cardUrl.toString();document.getElementById("openCard").href=cardUrl.toString();
-    document.getElementById("result").style.display="block";status("Card saved successfully.");
+    document.getElementById("result").style.display="block";status("Card saved successfully. QR code is ready.");
   }catch(e){console.error(e);status("Could not generate the card.\n"+(e?.message||e),true);}
 };
-document.getElementById("downloadBtn").onclick=()=>{if(!lastQR)return;const a=document.createElement("a");a.href=lastQR;a.download="sigma-solve-qr.png";a.click();};
+document.getElementById("downloadBtn").onclick=async()=>{
+  if(!lastQR)return;
+  try{
+    const r=await fetch(lastQR);
+    if(!r.ok)throw new Error("QR image could not be downloaded.");
+    const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="sigma-solve-qr.png";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }catch(e){
+    window.open(lastQR,"_blank");
+    status("QR is open in a new tab. Right-click/tap-and-hold the QR image to save it.",false);
+  }
+};
 </script></body></html>
