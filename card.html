@@ -1,64 +1,15 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Digital Card — Sigma Solve</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f3f5f8;font-family:Inter,Arial,sans-serif;color:#172033}
-.wrap{max-width:460px;margin:0 auto;padding:22px 14px}.card{background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 10px 35px #00000012}
-.head{padding:28px 22px;background:#111827;color:#fff}.head h1{margin:0;font-size:28px}.head p{margin:6px 0 0;color:#d1d5db}
-.body{padding:18px}.item{display:flex;gap:13px;padding:15px 0;border-bottom:1px solid #edf0f4}.icon{width:38px;height:38px;border-radius:10px;background:#f0f2f5;display:grid;place-items:center;flex:none}.label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#667085}.value{margin-top:3px;line-height:1.4;word-break:break-word}.value a{color:inherit;text-decoration:none}
-.vcard{width:100%;margin-top:18px;background:#111827;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:700;font-size:15px}
-.status{text-align:center;padding:50px 20px;color:#667085}
-</style>
-</head>
-<body><div class="wrap"><div id="app" class="card"><div class="status">Loading card…</div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Card — Sigma Solve</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f8;font-family:Inter,Arial,sans-serif;color:#172033}.wrap{max-width:460px;margin:0 auto;padding:22px 14px}.card{background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 10px 35px #00000012}.head{padding:28px 22px;background:#111827;color:#fff}.head h1{margin:0;font-size:28px}.head p{margin:6px 0 0;color:#d1d5db}.body{padding:18px}.item{display:flex;gap:13px;padding:15px 0;border-bottom:1px solid #edf0f4}.icon{width:38px;height:38px;border-radius:10px;background:#f0f2f5;display:grid;place-items:center;flex:none}.label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#667085}.value{margin-top:3px;line-height:1.4;word-break:break-word}.value a{color:inherit;text-decoration:none}.vcard{width:100%;margin-top:18px;background:#111827;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:700;font-size:15px}.status{text-align:center;padding:50px 20px;color:#667085}
+</style></head><body><div class="wrap"><div id="app" class="card"><div class="status">Loading card…</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL="https://pzricttvourvfvymwcjs.supabase.co";
-const SUPABASE_KEY="sb_publishable_PUqEGsrCKbj3h3UyrUuDaw_MvrCNrXv";
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const db=window.supabase?.createClient("https://pzricttvourvfvymwcjs.supabase.co","sb_publishable_PUqEGsrCKbj3h3UyrUuDaw_MvrCNrXv");
 const slug=new URLSearchParams(location.search).get("slug");
-
-function esc(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");}
-function linkFor(f){
-  const v=String(f.value||"");
-  if(f.type==="phone") return `<a href="tel:${esc(v)}">${esc(v)}</a>`;
-  if(f.type==="email") return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
-  if(f.type==="url"){let u=/^https?:\/\//i.test(v)?v:"https://"+v;return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(v)}</a>`;}
-  if(f.type==="whatsapp"){let p=v.replace(/[^0-9]/g,"");return `<a href="https://wa.me/${esc(p)}" target="_blank" rel="noopener">${esc(v)}</a>`;}
-  return esc(v);
-}
-function icon(type){return type==="phone"?"☎":type==="email"?"✉":type==="url"?"↗":type==="whatsapp"?"◉":"•";}
-function makeVCard(data){
-  const get=t=>data.fields.find(f=>f.type===t)?.value||"";
-  let out=["BEGIN:VCARD","VERSION:3.0","FN:"+data.name];
-  if(data.company)out.push("ORG:"+data.company);
-  if(data.designation)out.push("TITLE:"+data.designation);
-  const phone=get("phone"),email=get("email"),url=get("url");
-  if(phone)out.push("TEL;TYPE=CELL:"+phone);
-  if(email)out.push("EMAIL:"+email);
-  if(url)out.push("URL:"+(/https?:\/\//i.test(url)?url:"https://"+url));
-  const address=data.fields.find(f=>/address/i.test(f.label))?.value;
-  if(address)out.push("ADR;TYPE=WORK:;;"+address+";;;;");
-  out.push("END:VCARD");return out.join("\r\n");
-}
-function downloadVCard(data){
-  const blob=new Blob([makeVCard(data)],{type:"text/vcard;charset=utf-8"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(data.name||"contact")+".vcf";a.click();URL.revokeObjectURL(a.href);
-}
-async function load(){
- if(!slug){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return;}
- const {data,error}=await db.from("digital_cards").select("data").eq("slug",slug).maybeSingle();
- if(error||!data){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return;}
- const d=data.data;
- document.title=(d.name||"Digital Card")+" — "+(d.company||"");
- let html=`<div class="head"><h1>${esc(d.name)}</h1>${d.designation?`<p>${esc(d.designation)}</p>`:""}${d.company?`<p>${esc(d.company)}</p>`:""}</div><div class="body">`;
- (d.fields||[]).forEach(f=>{html+=`<div class="item"><div class="icon">${icon(f.type)}</div><div><div class="label">${esc(f.label)}</div><div class="value">${linkFor(f)}</div></div></div>`});
- html+=`<button class="vcard" id="save">Download vCard</button></div>`;
- document.getElementById("app").innerHTML=html;
- document.getElementById("save").onclick=()=>downloadVCard(d);
-}
-load();
+const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function link(f){const v=String(f.value||"");if(f.type==="phone")return `<a href="tel:${esc(v)}">${esc(v)}</a>`;if(f.type==="email")return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;if(f.type==="url"){let u=/^https?:\/\//i.test(v)?v:"https://"+v;return `<a target="_blank" rel="noopener" href="${esc(u)}">${esc(v)}</a>`;}if(f.type==="whatsapp"){let p=v.replace(/\D/g,"");return `<a target="_blank" rel="noopener" href="https://wa.me/${p}">${esc(v)}</a>`;}return esc(v);}
+function icon(t){return t==="phone"?"☎":t==="email"?"✉":t==="url"?"↗":t==="whatsapp"?"◉":"•";}
+function vcard(d){let g=t=>d.fields.find(f=>f.type===t)?.value||"",o=["BEGIN:VCARD","VERSION:3.0","FN:"+d.name];if(d.company)o.push("ORG:"+d.company);if(d.designation)o.push("TITLE:"+d.designation);let p=g("phone"),e=g("email"),u=g("url");if(p)o.push("TEL;TYPE=CELL:"+p);if(e)o.push("EMAIL:"+e);if(u)o.push("URL:"+( /^https?:\/\//i.test(u)?u:"https://"+u));let a=d.fields.find(f=>/address/i.test(f.label))?.value;if(a)o.push("ADR;TYPE=WORK:;;"+a+";;;;");o.push("END:VCARD");return o.join("\r\n");}
+async function load(){if(!db||!slug){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return}const r=await db.from("digital_cards").select("data").eq("slug",slug).maybeSingle();if(r.error||!r.data){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return}const d=r.data.data;let h=`<div class="head"><h1>${esc(d.name)}</h1>${d.designation?`<p>${esc(d.designation)}</p>`:""}${d.company?`<p>${esc(d.company)}</p>`:""}</div><div class="body">`;for(const f of d.fields||[])h+=`<div class="item"><div class="icon">${icon(f.type)}</div><div><div class="label">${esc(f.label)}</div><div class="value">${link(f)}</div></div></div>`;h+='<button class="vcard" id="save">Download vCard</button></div>';document.getElementById("app").innerHTML=h;document.getElementById("save").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([vcard(d)],{type:"text/vcard;charset=utf-8"}));a.download=(d.name||"contact")+".vcf";a.click();};}load();
 </script></body></html>
