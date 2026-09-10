@@ -1,15 +1,53 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Digital Card — Sigma Solve</title><style>
-*{box-sizing:border-box}body{margin:0;background:#f3f5f8;font-family:Inter,Arial,sans-serif;color:#172033}.wrap{max-width:460px;margin:0 auto;padding:22px 14px}.card{background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 10px 35px #00000012}.head{padding:28px 22px;background:#0047FB;color:#fff}.head h1{margin:0;font-size:28px}.head p{margin:6px 0 0;color:#d1d5db}.body{padding:18px}.item{display:flex;gap:13px;padding:15px 0;border-bottom:1px solid #edf0f4}.icon{width:38px;height:38px;border-radius:10px;background:#f0f2f5;display:grid;place-items:center;flex:none}.label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#667085}.value{margin-top:3px;line-height:1.4;word-break:break-word}.value a{color:inherit;text-decoration:none}.vcard{width:100%;margin-top:18px;background:#0047FB;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:700;font-size:15px}.status{text-align:center;padding:50px 20px;color:#667085}
-</style></head><body><div class="wrap"><div id="app" class="card"><div class="status">Loading card…</div></div></div>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Card — Sigma Solve</title>
+<style>
+:root{--blue:#075cff;--cyan:#08a9e8;--navy:#17105d;--ink:#141a35;--muted:#667085;--line:#e8edf5}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 80% 0,#cdefff 0,transparent 32%),linear-gradient(145deg,#f4f8ff,#edf5ff 55%,#faf7ff);min-height:100vh}
+.wrap{max-width:480px;margin:auto;padding:18px 12px 30px}.card{background:#fff;border:1px solid #e1e8f3;border-radius:30px;overflow:hidden;box-shadow:0 24px 65px #173a761c}
+.cover{height:150px;position:relative;overflow:hidden;background:linear-gradient(135deg,#071b74 0%,#075cff 55%,#08a9e8 100%)}
+.cover:before{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:#ffffff18;right:-110px;top:-165px}
+.cover:after{content:"";position:absolute;width:240px;height:240px;border-radius:45% 55% 60% 40%;background:#ffffff14;left:-95px;bottom:-165px;transform:rotate(25deg)}
+.cover-logo{position:absolute;z-index:2;left:22px;top:21px;width:185px;height:44px;object-fit:contain;object-position:left center;filter:brightness(0) invert(1)}
+.tagline{position:absolute;z-index:2;right:20px;top:26px;color:#fff;font-size:8px;line-height:1.6;letter-spacing:.19em;font-weight:800;text-align:right;max-width:125px}
+.profile{margin-top:-52px;position:relative;z-index:5;text-align:center;padding:0 20px 18px}
+.avatar{width:104px;height:104px;border-radius:50%;margin:auto;background:linear-gradient(135deg,#fff,#eaf3ff);border:7px solid #fff;box-shadow:0 10px 28px #12346b24;display:grid;place-items:center;color:var(--blue);font-size:34px;font-weight:900}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}.name{font-size:28px;letter-spacing:-.5px;margin:14px 0 5px}.role{font-weight:850;color:var(--blue);font-size:16px}.company{color:#59637a;font-size:14px;margin-top:4px}
+.body{padding:2px 20px 22px}.item{display:flex;align-items:center;gap:13px;padding:13px 2px;border-bottom:1px solid var(--line)}.icon{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;flex:none;background:linear-gradient(135deg,#edf5ff,#f3f0ff);color:var(--blue);border:1px solid #e1e9f7}.icon svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.info{min-width:0;flex:1}.label{font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#8992a4}.value{margin-top:4px;font-size:15px;line-height:1.4;word-break:break-word}.value a{color:var(--ink);text-decoration:none}.arrow{color:#a2aabc;font-size:22px}
+.actions{display:flex;gap:9px;margin-top:20px}.vcard,.share{border:0;border-radius:13px;padding:14px 12px;font-weight:850;font-size:14px;cursor:pointer}.vcard{flex:1;color:#fff;background:linear-gradient(90deg,var(--blue),var(--cyan));box-shadow:0 10px 22px #0b5cff25}.share{width:105px;color:#1455ce;background:#edf4ff}
+.footer{padding:2px 20px 25px;text-align:center;color:#8790a1;font-size:11px;line-height:1.7}.footer b{color:var(--navy)}
+.status{text-align:center;padding:80px 20px;color:#667085}
+</style>
+</head>
+<body><div class="wrap"><div id="app" class="card"><div class="status">Loading card…</div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const db=window.supabase?.createClient("https://pzricttvourvfvymwcjs.supabase.co","sb_publishable_PUqEGsrCKbj3h3UyrUuDaw_MvrCNrXv");
 const slug=new URLSearchParams(location.search).get("slug");
 const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
-function link(f){const v=String(f.value||"");if(f.type==="phone")return `<a href="tel:${esc(v)}">${esc(v)}</a>`;if(f.type==="email")return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;if(f.type==="url"){let u=/^https?:\/\//i.test(v)?v:"https://"+v;return `<a target="_blank" rel="noopener" href="${esc(u)}">${esc(v)}</a>`;}if(f.type==="whatsapp"){let p=v.replace(/\D/g,"");return `<a target="_blank" rel="noopener" href="https://wa.me/${p}">${esc(v)}</a>`;}return esc(v);}
-function icon(t){return t==="phone"?"☎":t==="email"?"✉":t==="url"?"↗":t==="whatsapp"?"◉":"•";}
-function vcard(d){let g=t=>d.fields.find(f=>f.type===t)?.value||"",o=["BEGIN:VCARD","VERSION:3.0","FN:"+d.name];if(d.company)o.push("ORG:"+d.company);if(d.designation)o.push("TITLE:"+d.designation);let p=g("phone"),e=g("email"),u=g("url");if(p)o.push("TEL;TYPE=CELL:"+p);if(e)o.push("EMAIL:"+e);if(u)o.push("URL:"+( /^https?:\/\//i.test(u)?u:"https://"+u));let a=d.fields.find(f=>/address/i.test(f.label))?.value;if(a)o.push("ADR;TYPE=WORK:;;"+a+";;;;");o.push("END:VCARD");return o.join("\r\n");}
-async function load(){if(!db||!slug){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return}const r=await db.from("digital_cards").select("data").eq("slug",slug).maybeSingle();if(r.error||!r.data){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return}const d=r.data.data;let h=`<div class="head"><h1>${esc(d.name)}</h1>${d.designation?`<p>${esc(d.designation)}</p>`:""}${d.company?`<p>${esc(d.company)}</p>`:""}</div><div class="body">`;for(const f of d.fields||[])h+=`<div class="item"><div class="icon">${icon(f.type)}</div><div><div class="label">${esc(f.label)}</div><div class="value">${link(f)}</div></div></div>`;h+='<button class="vcard" id="save">Download vCard</button></div>';document.getElementById("app").innerHTML=h;document.getElementById("save").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([vcard(d)],{type:"text/vcard;charset=utf-8"}));a.download=(d.name||"contact")+".vcf";a.click();};}load();
+function svg(t){const c='viewBox="0 0 24 24"';if(t==="phone")return `<svg ${c}><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.4 1.8.6 2.8.7a2 2 0 0 1 1.8 2.1z"/></svg>`;
+if(t==="email")return `<svg ${c}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`;
+if(t==="url")return `<svg ${c}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>`;
+if(t==="whatsapp")return `<svg ${c}><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5z"/><path d="M8.5 8.5c.3-.6.7-.6 1.1-.1l.8 1c.3.3.2.7 0 1l-.4.5a7 7 0 0 0 2.8 2.8l.5-.4c.3-.2.7-.3 1 0l1 .8c.5.4.5.8-.1 1.1-1 .5-2.7-.1-4.4-1.5-1.7-1.4-2.6-3-2.3-4.2z"/></svg>`;
+if(t==="address")return `<svg ${c}><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
+return `<svg ${c}><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>`}
+function link(f){const v=String(f.value||"");if(f.type==="phone")return `<a href="tel:${esc(v)}">${esc(v)}</a>`;if(f.type==="email")return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;if(f.type==="url"){let u=/^https?:\/\//i.test(v)?v:"https://"+v;return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(v)}</a>`}if(f.type==="whatsapp"){let p=v.replace(/\D/g,"");return `<a href="https://wa.me/${p}" target="_blank" rel="noopener">${esc(v)}</a>`}return esc(v)}
+function makeVCard(d){let g=t=>d.fields.find(f=>f.type===t)?.value||"",o=["BEGIN:VCARD","VERSION:3.0","FN:"+d.name];if(d.company)o.push("ORG:"+d.company);if(d.designation)o.push("TITLE:"+d.designation);let p=g("phone"),e=g("email"),u=g("url");if(p)o.push("TEL;TYPE=CELL:"+p);if(e)o.push("EMAIL:"+e);if(u)o.push("URL:"+( /^https?:\/\//i.test(u)?u:"https://"+u));let a=d.fields.find(f=>/address|location/i.test(f.label))?.value;if(a)o.push("ADR;TYPE=WORK:;;"+a+";;;;");o.push("END:VCARD");return o.join("\r\n")}
+function saveVCF(d){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([makeVCard(d)],{type:"text/vcard;charset=utf-8"}));a.download=(d.name||"contact")+".vcf";a.click()}
+async function load(){
+ if(!db||!slug){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return}
+ const r=await db.from("digital_cards").select("data").eq("slug",slug).maybeSingle();
+ if(r.error||!r.data){document.getElementById("app").innerHTML='<div class="status">Card not found.</div>';return}
+ const d=r.data.data;
+ document.title=(d.name||"Digital Card")+" — "+(d.company||"Sigma Solve");
+ const initials=(d.name||"SS").split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
+ let h='<div class="cover"><img class="cover-logo" src="assets/sigma-solve-logo.png" alt="Sigma Solve"><div class="tagline">PEOPLE<br>SOLUTIONS<br>A BRIGHTER<br>TOMORROW</div></div><div class="profile"><div class="avatar">'+(d.photoUrl?'<img src="'+esc(d.photoUrl)+'" alt="Profile photo">':esc(initials))+'</div><div class="name">'+esc(d.name)+'</div>'+(d.designation?'<div class="role">'+esc(d.designation)+'</div>':'')+(d.company?'<div class="company">'+esc(d.company)+'</div>':'')+'</div><div class="body">';
+ for(const f of d.fields||[]){const typ=(/address|location/i.test(f.label)?"address":f.type);h+='<div class="item"><div class="icon">'+svg(typ)+'</div><div class="info"><div class="label">'+esc(f.label)+'</div><div class="value">'+link(f)+'</div></div><div class="arrow">›</div></div>'}
+ h+='<div class="actions"><button class="vcard" id="save">↓ &nbsp; Download vCard</button><button class="share" id="share">↗ &nbsp; Share</button></div></div><div class="footer">Powered by <b>Sigma Solve</b><br>Make Connections That Matter.</div>';
+ document.getElementById("app").innerHTML=h;document.getElementById("save").onclick=()=>saveVCF(d);
+ document.getElementById("share").onclick=async()=>{try{if(navigator.share)await navigator.share({title:d.name+" — "+(d.company||"Sigma Solve"),url:location.href});else await navigator.clipboard.writeText(location.href)}catch(e){}};
+}
+load();
 </script></body></html>
